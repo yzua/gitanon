@@ -3,22 +3,26 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs =
+    { self, nixpkgs }:
+    let
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+    in
     {
-      self,
-      nixpkgs,
-      flake-utils,
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
-      {
-        packages = {
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
           gitanon = pkgs.buildGoModule {
             pname = "gitanon";
             version = self.shortRev or self.dirtyShortRev or "dev";
@@ -31,29 +35,43 @@
               "-X github.com/yzua/gitanon/cmd.Version=${self.shortRev or "dev"}"
             ];
 
-            # Run tests during build
+            nativeCheckInputs = [ pkgs.git ];
             doCheck = true;
           };
 
           default = self.packages.${system}.gitanon;
-        };
+        }
+      );
 
-        apps = {
+      apps = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
           gitanon = {
             type = "app";
             program = "${self.packages.${system}.gitanon}/bin/gitanon";
           };
           default = self.apps.${system}.gitanon;
-        };
+        }
+      );
 
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            go
-            golangci-lint
-            just
-            git
-          ];
-        };
-      }
-    );
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            buildInputs = with pkgs; [
+              go
+              golangci-lint
+              just
+              git
+            ];
+          };
+        }
+      );
+    };
 }
