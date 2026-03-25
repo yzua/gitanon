@@ -14,8 +14,8 @@ var onCmd = &cobra.Command{
 	Long: `Set local git config to anonymous mode: no name, no email, no signing.
 Sets the mysystem.gitanon=true flag so hooks can detect anonymous commits.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if !git.IsInsideRepo() {
-			return fmt.Errorf("not inside a git repository")
+		if err := requireRepo(); err != nil {
+			return err
 		}
 
 		if err := git.Anonymize("user", ""); err != nil {

@@ -14,8 +14,8 @@ var offCmd = &cobra.Command{
 	Long: `Remove anonymous overrides from local git config and re-enable GPG signing.
 After this, the repo falls back to your global git identity.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if !git.IsInsideRepo() {
-			return fmt.Errorf("not inside a git repository")
+		if err := requireRepo(); err != nil {
+			return err
 		}
 
 		if err := git.Restore(); err != nil {

@@ -9,6 +9,23 @@ import (
 	"github.com/yzua/gitanon/internal/git"
 )
 
+func chdir(t *testing.T, dir string) {
+	t.Helper()
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd() error: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir(%q) error: %v", dir, err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(origDir); err != nil {
+			t.Fatalf("restoring working directory: %v", err)
+		}
+	})
+}
+
 // setupTempRepo creates a temporary git repo for testing.
 func setupTempRepo(t *testing.T) string {
 	t.Helper()
@@ -34,9 +51,7 @@ func setupTempRepo(t *testing.T) string {
 
 func TestAnonymizeAndRestore(t *testing.T) {
 	dir := setupTempRepo(t)
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(origDir)
+	chdir(t, dir)
 
 	// Verify initial state
 	user := git.WhoAmI()
@@ -96,9 +111,7 @@ func TestAnonymizeAndRestore(t *testing.T) {
 func TestIsInsideRepo(t *testing.T) {
 	// Should be true when we're in a repo
 	dir := setupTempRepo(t)
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(origDir)
+	chdir(t, dir)
 
 	if !git.IsInsideRepo() {
 		t.Error("IsInsideRepo() = false in a git repo")
@@ -106,7 +119,9 @@ func TestIsInsideRepo(t *testing.T) {
 
 	// Should be false in a temp dir without git
 	noRepo := t.TempDir()
-	os.Chdir(noRepo)
+	if err := os.Chdir(noRepo); err != nil {
+		t.Fatalf("Chdir(%q) error: %v", noRepo, err)
+	}
 	if git.IsInsideRepo() {
 		t.Error("IsInsideRepo() = true outside a git repo")
 	}
@@ -114,9 +129,7 @@ func TestIsInsideRepo(t *testing.T) {
 
 func TestRepoName(t *testing.T) {
 	dir := setupTempRepo(t)
-	origDir, _ := os.Getwd()
-	os.Chdir(dir)
-	defer os.Chdir(origDir)
+	chdir(t, dir)
 
 	name := git.RepoName()
 	if name != filepath.Base(dir) {

@@ -23,8 +23,8 @@ Available hooks:
   pre-push    — verifies GPG signatures unless anon mode is on`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if !git.IsInsideRepo() {
-			return fmt.Errorf("not inside a git repository")
+		if err := requireRepo(); err != nil {
+			return err
 		}
 
 		hookName := args[0]
@@ -59,24 +59,7 @@ func runPreCommit() error {
 }
 
 func runPrePush() error {
-	// Read stdin (pre-push receives ref info on stdin)
-	// We don't parse it — just verify signatures on recent commits
-	zeroSha := "0000000000000000000000000000000000000000"
-
-	// Try to get commits being pushed
-	cmd := exec.Command("git", "rev-list", "--all", "--max-count=20")
-	commits, err := cmd.Output()
-	if err != nil {
-		// If we can't list, don't block
-		return nil
-	}
-
-	_ = zeroSha
-	_ = commits
-
-	// Verify HEAD is signed
-	verifyCmd := exec.Command("git", "verify-commit", "HEAD")
-	if err := verifyCmd.Run(); err != nil {
+	if err := exec.Command("git", "verify-commit", "HEAD").Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "✗ gitanon: latest commit is NOT GPG-signed!")
 		fmt.Fprintln(os.Stderr, "  Fix: git commit --amend -S --no-edit")
 		return fmt.Errorf("unsigned commit detected")

@@ -12,8 +12,8 @@ var whoamiCmd = &cobra.Command{
 	Short: "Show current repo identity",
 	Long:  `Display the git identity (name, email, signing) for the current repository.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if !git.IsInsideRepo() {
-			return fmt.Errorf("not inside a git repository")
+		if err := requireRepo(); err != nil {
+			return err
 		}
 
 		user := git.WhoAmI()

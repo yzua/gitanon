@@ -22,8 +22,8 @@ Examples:
   gitanon as torvalds`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if !git.IsInsideRepo() {
-			return fmt.Errorf("not inside a git repository")
+		if err := requireRepo(); err != nil {
+			return err
 		}
 
 		username := args[0]

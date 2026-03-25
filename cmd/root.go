@@ -2,7 +2,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -36,22 +35,4 @@ func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
-}
-
-func repoOrExit() string {
-	// Handled in each subcommand to get proper error messages.
-	return ""
-}
-
-// checkRepo prints an error and exits if not inside a git repo.
-func checkRepo() error {
-	if err := requireRepo(); err != nil {
-		return err
-	}
-	return nil
-}
-
-// coloredErr formats an error message.
-func coloredErr(msg string) string {
-	return fmt.Sprintf("✗ %s", msg)
 }
