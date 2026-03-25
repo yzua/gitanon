@@ -22,8 +22,8 @@ nix run github:yzua/gitanon
 {
   inputs.gitanon.url = "github:yzua/gitanon";
 
-  # Then add to your packages or use in a module
-  environment.systemPackages = [ inputs.gitanon.packages.${system}.default ];
+  # Then add it to your packages
+  environment.systemPackages = [ inputs.gitanon.packages.${pkgs.system}.default ];
 }
 ```
 
@@ -48,10 +48,6 @@ Or install to `$GOPATH/bin`:
 just install
 ```
 
-## Pre-built Binaries
-
-Download from [Releases](https://github.com/yzua/gitanon/releases) and place in your `$PATH`.
-
 ## Requirements
 
 - Git (any recent version)
@@ -67,4 +63,4 @@ gitanon --help
 
 ## Setup Hook Integration
 
-See [hooks.md](hooks.md) for adding the `mysystem.gitanon` flag check to your git hooks.
+See [hooks.md](hooks.md) for wiring `gitanon hook` into `pre-commit` and `pre-push`, or for checking `mysystem.gitanon` in your own hooks.

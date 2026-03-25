@@ -14,7 +14,7 @@ Anonymous git identity manager — commit anonymously, impersonate GitHub users,
 
 `gitanon` overrides your local git config (never global) so you can:
 
-- **Go anonymous** — erase name/email, disable GPG signing, mark the repo with a config flag
+- **Go anonymous** — set a local anonymous identity (`user` with an empty email), disable signing, mark the repo with a config flag
 - **Impersonate anyone** — fetch a GitHub user's public profile and commit as them (name + noreply email)
 - **Restore cleanly** — undo all overrides and re-enable signing in one command
 - **Hook integration** — ships a `mysystem.gitanon` config flag that your hooks can check to skip signing enforcement
@@ -48,9 +48,11 @@ gitanon whoami
 # Name:     user
 # Email:    (none)
 # Signing:  false
+# Key:      (none)
 # AnonMode: on
+# Scope:    local (override)
 
-# Commit anonymously (no hooks blocking you)
+# Commit anonymously (with hooks that honor `mysystem.gitanon`)
 git add .
 git commit -m "chore: anonymous work"
 
@@ -67,7 +69,7 @@ gitanon off
 
 | Command | Aliases | Description |
 |---------|---------|-------------|
-| `gitanon on` | `anon` | Set anonymous identity (no name, no email, no signing) |
+| `gitanon on` | `anon` | Set anonymous identity (`user`, empty email, signing disabled) |
 | `gitanon off` | `back`, `undo` | Restore global identity and re-enable GPG signing |
 | `gitanon as <user>` | — | Fetch GitHub user and commit as them |
 | `gitanon whoami` | — | Show current repo identity |
@@ -87,6 +89,9 @@ gitanon as octocat
    - `user.name` = "The Octocat"
    - `user.email` = "583231+octocat@users.noreply.github.com"
    - `commit.gpgSign` = false
+   - `tag.gpgSign` = false
+   - `push.gpgSign` = false
+   - `user.signingKey` = ""
    - `mysystem.gitanon` = true
 
 The noreply email format is `<id>+<login>@users.noreply.github.com`, which is GitHub's native anonymous email format.

@@ -20,7 +20,7 @@ nix develop    # or install go + just manually
 | `just vet` | Run go vet |
 | `just cover` | Generate test coverage report |
 | `just install` | Install to `$GOPATH/bin` |
-| `just clean` | Remove built binary |
+| `just clean` | Remove build artifacts |
 
 ## Project Structure
 
@@ -43,13 +43,13 @@ gitanon/
 1. Create `cmd/<name>.go` with a `cobra.Command`
 2. Register it in `init()` via `rootCmd.AddCommand(<name>Cmd)`
 3. Use `RunE` (not `Run`) for error propagation
-4. Add tests in `cmd/<name>_test.go` if applicable
+4. Add tests in `cmd/<name>_test.go` if applicable, or extend package tests under `internal/` when the behavior lives there
 
 ## Code Style
 
 - Standard Go formatting (`gofmt`)
 - No comments unless needed for non-obvious logic
-- Use `RunE` on all commands
+- Prefer `RunE` for commands that can fail; use `Run` only when the command cannot return an error
 - Errors returned from commands print to stderr via cobra
 
 ## Testing

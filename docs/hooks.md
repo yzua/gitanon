@@ -1,6 +1,6 @@
 # Hook Integration
 
-`gitanon` sets a `mysystem.gitanon=true` flag in local git config when anonymous mode is active. Your hooks can check this flag to conditionally skip signing enforcement.
+`gitanon` sets `mysystem.gitanon=true` in local git config when anonymous mode is active. Your hooks can check this flag to skip signing enforcement.
 
 ## The Config Flag
 
@@ -14,11 +14,16 @@ git config --bool --get mysystem.gitanon
 
 Wire `gitanon hook` into your git hooks:
 
+- `gitanon hook pre-commit` warns to stderr when `commit.gpgSign` is not `true`, then exits successfully.
+- `gitanon hook pre-push` runs `git verify-commit HEAD`; it fails when the current `HEAD` commit is not signed.
+- Both commands exit successfully without checks when `mysystem.gitanon=true`.
+
 ### Global hooks (recommended)
 
 Set a global hooks directory:
 
 ```bash
+mkdir -p ~/.config/git/hooks
 git config --global core.hooksPath ~/.config/git/hooks
 ```
 
@@ -62,10 +67,12 @@ fi
 # ... your existing hook logic ...
 ```
 
-## Full Example: Pre-Push with GPG Enforcement
+## Custom Full Example: Pre-Push with GPG Enforcement
+
+If you want to verify every pushed commit instead of just `HEAD`, use your own hook logic instead of `gitanon hook pre-push`:
 
 ```bash
-#!/bin/sh
+#!/usr/bin/env bash
 set -euo pipefail
 
 # Skip if anon mode
@@ -120,4 +127,7 @@ gitanon completion zsh > "${fpath[1]}/_gitanon"
 
 # Fish
 gitanon completion fish > ~/.config/fish/completions/gitanon.fish
+
+# PowerShell
+gitanon completion powershell > gitanon.ps1
 ```
