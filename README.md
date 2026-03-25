@@ -21,16 +21,17 @@ Anonymous git identity manager — commit anonymously, impersonate GitHub users,
 
 ## Install
 
+See the full [Installation Guide](docs/installation.md) for all methods including Nix, `go install`, and building from source.
+
 ```bash
+# Quick install via go
 go install github.com/yzua/gitanon@latest
-```
 
-Or build from source:
+# Or via nix
+nix run github:yzua/gitanon
 
-```bash
-git clone https://github.com/yzua/gitanon.git
-cd gitanon
-make build
+# Or add to your flake inputs
+# inputs.gitanon.url = "github:yzua/gitanon";
 ```
 
 ## Quick Start
@@ -126,10 +127,12 @@ This flag is only set in local config (`git config --local`), never global.
 ## Development
 
 ```bash
-make all       # fmt + vet + lint + test + build
-make test      # Run tests
-make lint      # Run golangci-lint
-make cover     # Generate coverage report
+just all       # fmt + vet + lint + test + build
+just test      # Run tests
+just lint      # Run golangci-lint
+just cover     # Generate coverage report
+
+nix develop    # Enter dev shell (go, golangci-lint, just, git)
 ```
 
 ## Why not just `git config --local`?
@@ -143,4 +146,4 @@ You could do all this manually, but `gitanon`:
 
 ## License
 
-MIT
+[WTFPL](LICENSE)

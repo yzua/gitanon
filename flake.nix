@@ -23,7 +23,7 @@
             pname = "gitanon";
             version = self.shortRev or self.dirtyShortRev or "dev";
             src = ./.;
-            vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            vendorHash = "sha256-7K17JaXFsjf163g5PXCb5ng2gYdotnZ2IDKk8KFjNj0=";
 
             ldflags = [
               "-s"

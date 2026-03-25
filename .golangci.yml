@@ -1,3 +1,5 @@
+version: "2"
+
 linters:
   enable:
     - errcheck
@@ -15,13 +17,7 @@ linters:
     - bodyclose
     - nilerr
 
-linters-settings:
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-
-issues:
-  exclude-dirs:
-    - testdata
+formatters:
+  enable:
+    - gofmt
+    - goimports

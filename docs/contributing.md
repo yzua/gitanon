@@ -5,21 +5,22 @@
 ```bash
 git clone https://github.com/yzua/gitanon.git
 cd gitanon
+nix develop    # or install go + just manually
 ```
 
-## Make Targets
+## Commands
 
-| Target | Description |
-|--------|-------------|
-| `make all` | fmt + vet + lint + test + build |
-| `make build` | Build the binary |
-| `make test` | Run all tests |
-| `make lint` | Run golangci-lint |
-| `make fmt` | Format Go code |
-| `make vet` | Run go vet |
-| `make cover` | Generate test coverage report |
-| `make install` | Install to `$GOPATH/bin` |
-| `make clean` | Remove built binary |
+| Command | Description |
+|---------|-------------|
+| `just all` | fmt + vet + lint + test + build |
+| `just build` | Build the binary |
+| `just test` | Run all tests |
+| `just lint` | Run golangci-lint |
+| `just fmt` | Format Go code |
+| `just vet` | Run go vet |
+| `just cover` | Generate test coverage report |
+| `just install` | Install to `$GOPATH/bin` |
+| `just clean` | Remove built binary |
 
 ## Project Structure
 
@@ -32,7 +33,9 @@ gitanon/
 │   ├── github/          # GitHub API client
 │   └── model/           # Shared types
 ├── testdata/            # Test fixtures
-└── docs/                # Documentation
+├── docs/                # Documentation
+├── flake.nix            # Nix flake (nix run / nix build)
+└── justfile             # Task runner
 ```
 
 ## Adding a New Subcommand
@@ -52,7 +55,7 @@ gitanon/
 ## Testing
 
 ```bash
-make test
+just test
 ```
 
 Tests use temporary git repos (created with `t.TempDir()`) and do not modify your real config.
