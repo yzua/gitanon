@@ -136,3 +136,63 @@ func TestRepoName(t *testing.T) {
 		t.Errorf("RepoName() = %q, want %q", name, filepath.Base(dir))
 	}
 }
+
+func TestRestoreRespectsPriorSigningState(t *testing.T) {
+	dir := setupTempRepo(t)
+	chdir(t, dir)
+
+	// Start with signing disabled globally
+	_ = exec.Command("git", "config", "--unset", "commit.gpgSign").Run()
+	_ = exec.Command("git", "config", "commit.gpgSign", "false").Run()
+
+	// Verify signing is off
+	if git.WhoAmI().Signing {
+		t.Fatal("initial signing should be false")
+	}
+
+	// Anonymize (saves prior state: signing=false)
+	if err := git.AnonymizeDefault(); err != nil {
+		t.Fatalf("AnonymizeDefault() error: %v", err)
+	}
+
+	// Restore should recover signing=false, not blindly set true
+	if err := git.Restore(); err != nil {
+		t.Fatalf("Restore() error: %v", err)
+	}
+
+	signVal := git.Get("--local", "commit.gpgSign")
+	if signVal != "false" {
+		t.Errorf("after restore, commit.gpgSign = %q, want false", signVal)
+	}
+}
+
+func TestDoubleAnonymizePreservesPriorState(t *testing.T) {
+	dir := setupTempRepo(t)
+	chdir(t, dir)
+
+	// First anonymize (signing was true from setup)
+	if err := git.Anonymize("first", "first@example.com"); err != nil {
+		t.Fatalf("first Anonymize() error: %v", err)
+	}
+
+	// Second anonymize — should NOT overwrite the saved prior state
+	if err := git.Anonymize("second", "second@example.com"); err != nil {
+		t.Fatalf("second Anonymize() error: %v", err)
+	}
+
+	// Verify identity updated
+	user := git.WhoAmI()
+	if user.Name != "second" {
+		t.Errorf("name = %q, want %q", user.Name, "second")
+	}
+
+	// Restore should still recover original signing=true
+	if err := git.Restore(); err != nil {
+		t.Fatalf("Restore() error: %v", err)
+	}
+
+	signVal := git.Get("--local", "commit.gpgSign")
+	if signVal != "true" {
+		t.Errorf("after restore from double-anonymize, commit.gpgSign = %q, want true", signVal)
+	}
+}

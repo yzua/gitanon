@@ -17,16 +17,20 @@ const (
 	localScope  = "--local"
 	globalScope = "--global"
 
-	keyUserName   = "user.name"
-	keyUserEmail  = "user.email"
-	keySigningKey = "user.signingKey"
-	keyCommitSign = "commit.gpgSign"
-	keyTagSign    = "tag.gpgSign"
-	keyPushSign   = "push.gpgSign"
-	keyAnonMode   = "mysystem.gitanon"
-	configTrue    = "true"
-	configFalse   = "false"
-	unknownRepo   = "(unknown)"
+	keyUserName        = "user.name"
+	keyUserEmail       = "user.email"
+	keySigningKey      = "user.signingKey"
+	keyCommitSign      = "commit.gpgSign"
+	keyTagSign         = "tag.gpgSign"
+	keyPushSign        = "push.gpgSign"
+	keyAnonMode        = "mysystem.gitanon"
+	keyPriorCommitSign = "mysystem.gitanon.priorcommitsign"
+	keyPriorTagSign    = "mysystem.gitanon.priortagsign"
+	keyPriorPushSign   = "mysystem.gitanon.priorpushsign"
+	configTrue         = "true"
+	configFalse        = "false"
+	anonDefaultName    = "user"
+	unknownRepo        = "(unknown)"
 )
 
 type configEntry struct {
@@ -100,8 +104,15 @@ func WhoAmI() model.GitUser {
 	return user
 }
 
-// Anonymize sets the repo to anonymous mode (no identity, no signing).
+// Anonymize sets the repo to anonymous mode with a custom name and email.
+// It saves the current signing state so Restore can recover it.
+// Skips saving prior state if already in anon mode (preserves the original).
 func Anonymize(name, email string) error {
+	if Get(localScope, keyAnonMode) != configTrue {
+		if err := savePriorSigning(); err != nil {
+			return err
+		}
+	}
 	return setLocal(
 		configEntry{key: keyUserName, value: name},
 		configEntry{key: keyUserEmail, value: email},
@@ -113,14 +124,40 @@ func Anonymize(name, email string) error {
 	)
 }
 
-// Restore removes anon overrides and re-enables signing.
+// AnonymizeDefault sets the repo to anonymous mode with the default identity.
+func AnonymizeDefault() error {
+	return Anonymize(anonDefaultName, "")
+}
+
+// Restore removes anon overrides and restores prior signing state.
 func Restore() error {
-	unsetLocal(keyUserName, keyUserEmail, keySigningKey, keyAnonMode)
+	commitSign := priorOrDefault(keyPriorCommitSign, configTrue)
+	tagSign := priorOrDefault(keyPriorTagSign, configTrue)
+	pushSign := priorOrDefault(keyPriorPushSign, configTrue)
+
+	unsetLocal(keyUserName, keyUserEmail, keySigningKey, keyAnonMode,
+		keyPriorCommitSign, keyPriorTagSign, keyPriorPushSign)
+
 	return setLocal(
-		configEntry{key: keyCommitSign, value: configTrue},
-		configEntry{key: keyTagSign, value: configTrue},
-		configEntry{key: keyPushSign, value: configTrue},
+		configEntry{key: keyCommitSign, value: commitSign},
+		configEntry{key: keyTagSign, value: tagSign},
+		configEntry{key: keyPushSign, value: pushSign},
 	)
+}
+
+// VerifyCommitSigning checks that the HEAD commit has a valid GPG signature.
+func VerifyCommitSigning() error {
+	return Run("verify-commit", "HEAD")
+}
+
+// SigningEnabled reports whether commit signing is active
+// (local or global config).
+func SigningEnabled() bool {
+	val := Get(localScope, keyCommitSign)
+	if val == "" {
+		val = Get(globalScope, keyCommitSign)
+	}
+	return val == configTrue
 }
 
 func readUser(scope string) model.GitUser {
@@ -145,4 +182,35 @@ func unsetLocal(keys ...string) {
 	for _, key := range keys {
 		Unset(key)
 	}
+}
+
+func savePriorSigning() error {
+	prior := []configEntry{
+		{key: keyPriorCommitSign, value: signingValue(keyCommitSign)},
+		{key: keyPriorTagSign, value: signingValue(keyTagSign)},
+		{key: keyPriorPushSign, value: signingValue(keyPushSign)},
+	}
+	return setLocal(prior...)
+}
+
+// signingValue returns "true" or "false" for a signing key,
+// checking local then global scope.
+func signingValue(key string) string {
+	val := Get(localScope, key)
+	if val == "" {
+		val = Get(globalScope, key)
+	}
+	if val == configTrue {
+		return configTrue
+	}
+	return configFalse
+}
+
+// priorOrDefault reads a saved prior value; falls back to default if unset.
+func priorOrDefault(priorKey, fallback string) string {
+	val := Get(localScope, priorKey)
+	if val == "" {
+		return fallback
+	}
+	return val
 }
