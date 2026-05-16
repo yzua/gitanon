@@ -1,4 +1,3 @@
-// Package github provides GitHub API helpers.
 package github
 
 import (
@@ -11,15 +10,32 @@ import (
 	"github.com/yzua/gitanon/internal/model"
 )
 
-const apiBase = "https://api.github.com"
+const defaultBaseURL = "https://api.github.com"
+
+// HTTPConfig controls how GitHub API requests are made.
+// Pass one to LookupUser to override defaults (e.g. in tests).
+type HTTPConfig struct {
+	Client  *http.Client
+	BaseURL string // defaults to "https://api.github.com"
+}
 
 // LookupUser fetches public info for a GitHub username.
 // No authentication required — this is a public endpoint.
 // Rate limit: 60 requests/hour (unauthenticated).
-func LookupUser(username string) (*model.GitHubUser, error) {
-	url := fmt.Sprintf("%s/users/%s", apiBase, username)
-
+func LookupUser(username string, cfg ...HTTPConfig) (*model.GitHubUser, error) {
+	baseURL := defaultBaseURL
 	client := &http.Client{Timeout: 10 * time.Second}
+	if len(cfg) > 0 {
+		if cfg[0].BaseURL != "" {
+			baseURL = cfg[0].BaseURL
+		}
+		if cfg[0].Client != nil {
+			client = cfg[0].Client
+		}
+	}
+
+	url := fmt.Sprintf("%s/users/%s", baseURL, username)
+
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
