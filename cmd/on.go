@@ -18,12 +18,12 @@ Sets the mysystem.gitanon=true flag so hooks can detect anonymous commits.`,
 			return err
 		}
 
-		if err := git.Anonymize("user", ""); err != nil {
+		if err := git.AnonymizeDefault(); err != nil {
 			return fmt.Errorf("setting anonymous identity: %w", err)
 		}
 
-		fmt.Printf("✔ Anonymous mode in %s\n", git.RepoName())
-		fmt.Println("  Name:    user")
+		fmt.Printf("Anonymous mode in %s\n", git.RepoName())
+		fmt.Println("  Name:    (anonymous)")
 		fmt.Println("  Email:   (none)")
 		fmt.Println("  Signing: disabled")
 		return nil
